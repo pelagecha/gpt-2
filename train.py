@@ -160,19 +160,28 @@ class GPT(nn.Module):
     
 
 # =========== Generation ===========
-num_return_sequences = 5
-max_length = 30
+num_return_sequences = 2
+max_length = 100
 
 model = GPT.from_pretrained("gpt2")
 model.eval()
-model.to("cuda")
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+else:
+    device = "cpu"
+
+print(f"Using {device}")
+
+model.to(device)
 
 import tiktoken
 enc = tiktoken.get_encoding("gpt2")
-tokens = enc.encode("Hello, I'm a language model,")
+tokens = enc.encode("Wanna hear a joke? ")
 tokens = torch.tensor(tokens, dtype=torch.long)
 tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
-x = tokens.to("cuda")
+x = tokens.to(device)
 
 while x.size(1) < max_length:
     with torch.no_grad():
