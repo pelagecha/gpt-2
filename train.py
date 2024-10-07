@@ -30,11 +30,14 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, num_heads, T, head_size)
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, num_heads, T, head_size)
 
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = att.masked_fill(self.bias[:,:,:T,:T] == 0, float("-inf"))
-        att = F.softmax(att, dim=-1)
+        # att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        # att = att.masked_fill(self.bias[:,:,:T,:T] == 0, float("-inf"))
+        # att = F.softmax(att, dim=-1)
+        # y = (att @ v).transpose(1, 2).contiguous().view(B,T,C) # use Flash attention instead! because it's faster
+        
+        y = F.scaled_dot_product_attention(q,k,v, is_causal=True) # NOTE Calculates Flash Attention, which uses Kernel Fusion to merge the operations into the same kernel, resulting in memory speedup and calculates SoftMax in stream manner.
 
-        y = (att @ v).transpose(1, 2).contiguous().view(B,T,C)
+        y = y.transpose(1, 2).contiguous().view(B,T,C)
         y = self.c_proj(y) # output projection
         return y
 
@@ -226,25 +229,32 @@ class DataLoader:
 # x = buf[:-1].view(B,T)
 # y = buf[1:].view(B,T)
 
-train_loader = DataLoader(B=16,T=1024) # batch size and sequence length
-model = GPT(GPTConfig())
+train_loader = DataLoader(B=4,T=1024) # batch size and sequence length
+torch.set_float32_matmul_precision("high") # NOTE Improves the operation performance through decreased precision
+
+model = GPT(GPTConfig(vocab_size=50304))
 model.to(device)
+print("Compiling the model...")
+model = torch.compile(model) # NOTE Compiling the model takes longer to start, but drastically improves the training time
+
 optimiser = torch.optim.AdamW(model.parameters(), lr=3e-4)
 for i in range(50):
+    torch.cuda.synchronize()
     t0 = time.time()
 
     x,y = train_loader.next_batch()
     x,y = x.to(device), y.to(device)
     optimiser.zero_grad()
-    logits, loss = model(x, y)
+    with torch.autocast(device_type=device, dtype=torch.bfloat16): # NOTE Autocasts to bfloat16 (same exponent as float32, but smaller mantissa) that doesn't require gradient scaler
+        logits, loss = model(x, y)
     loss.backward()
     optimiser.step()
-
+    torch.cuda.synchronize()
     t1 = time.time()
-    if device == "cuda":
-        torch.cuda.synchronize()
     dt = (t1-t0)*1000
     print(f"step {i}, loss: {loss.item()}, dt: {dt:.2f}ms")
+
+
 
 import sys; sys.exit(0)
 
