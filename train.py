@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import math
 import transformers
 import tiktoken
+import inspect 
 # ---------------------------
 
 
@@ -128,57 +129,27 @@ class GPT(nn.Module):
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
         return logits, loss
 
-    @classmethod
-    def from_pretrained(cls, model_type):
-        # ================================================================
-        # =-=-=-=-=-=-=- loading weights from huggingface -=-=-=-=-=-=-=-=
-        # ================================================================
-        assert model_type in {'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}
-        from transformers import GPT2LMHeadModel
-        print("loading weights from pretrained gpt: %s" % model_type)
-
-        # n_layer, n_head and n_embd are determined from model_type
-        config_args = {
-            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768),  # 124M params
-            'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024), # 350M params
-            'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280), # 774M params
-            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600), # 1558M params
-        }[model_type]
-        config_args['vocab_size'] = 50257 # always 50257 for GPT model checkpoints
-        config_args['block_size'] = 1024 # always 1024 for GPT model checkpoints
-        # create a from-scratch initialized minGPT model
-        config = GPTConfig(**config_args)
-        model = GPT(config)
-        sd = model.state_dict()
-        sd_keys = sd.keys()
-        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')] # discard this mask / buffer, not a param
-
-        # init a huggingface/transformers model
-        model_hf = GPT2LMHeadModel.from_pretrained(model_type)
-        sd_hf = model_hf.state_dict()
-
-        # copy while ensuring all of the parameters are aligned and match in names and shapes
-        sd_keys_hf = sd_hf.keys()
-        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
-        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')] # same, just the mask (buffer)
-        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
-        # basically the openai checkpoints use a "Conv1D" module, but we only want to use a vanilla Linear
-        # this means that we have to transpose these weights when we import them
-        assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
-        for k in sd_keys_hf:
-            if any(k.endswith(w) for w in transposed):
-                # special treatment for the Conv1D weights we need to transpose
-                assert sd_hf[k].shape[::-1] == sd[k].shape
-                with torch.no_grad():
-                    sd[k].copy_(sd_hf[k].t())
-            else:
-                # vanilla copy over the other parameters
-                assert sd_hf[k].shape == sd[k].shape
-                with torch.no_grad():
-                    sd[k].copy_(sd_hf[k])
-
-        return model
-
+    def configure_optimisers(self, weight_decay, learning_rate, device):
+        # start with all of the candidate parameters (that require grad)
+        param_dict = {pn: p for pn, p in self.named_parameters()}
+        param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
+        # create optim groups. Any parameters that is 2D will be weight decayed, otherwise no.
+        # i.e. all weight tensors in matmuls + embeddings decay, all biases and layernorms don't.
+        decay_params = [p for n, p in param_dict.items() if p.dim() >= 2]
+        nodecay_params = [p for n, p in param_dict.items() if p.dim() < 2]
+        optim_groups = [
+            {'params': decay_params, 'weight_decay': weight_decay},
+            {'params': nodecay_params, 'weight_decay': 0.0}
+        ]
+        num_decay_params = sum(p.numel() for p in decay_params)
+        num_nodecay_params = sum(p.numel() for p in nodecay_params)
+        print(f"num decayed parameter tensors: {len(decay_params)}, with {num_decay_params:,} parameters")
+        print(f"num non-decayed parameter tensors: {len(nodecay_params)}, with {num_nodecay_params:,} parameters")
+        # Create AdamW optimizer and use the fused version if it is available
+        fused_available = 'fused' in inspect.signature(torch.optim.AdamW).parameters
+        use_fused = fused_available and device == "cuda"
+        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=use_fused) # Use Fused AdamW
+        return optimizer
     
 
 # =========== Generation ===========
@@ -229,31 +200,72 @@ class DataLoader:
 # x = buf[:-1].view(B,T)
 # y = buf[1:].view(B,T)
 
+
+# Simulate Large Batch sizes
+total_batch_size = 524288
+B = 16
+T = 1024
+assert total_batch_size % (B * T) == 0, "make sure total_batch_size is divisible by B * T!"
+grad_accum_steps = total_batch_size // (B * T)
+print(f"total desired batch size: {total_batch_size}")
+print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
+
+
 train_loader = DataLoader(B=4,T=1024) # batch size and sequence length
 torch.set_float32_matmul_precision("high") # NOTE Improves the operation performance through decreased precision
 
-model = GPT(GPTConfig(vocab_size=50304))
+model = GPT(GPTConfig(vocab_size=50304)) # NOTE Introduce a "nice" number (padded fom 50257) to improve speed of computation (divisible by 2), so the CUDA Block Tiles run better
 model.to(device)
 print("Compiling the model...")
 model = torch.compile(model) # NOTE Compiling the model takes longer to start, but drastically improves the training time
+# optimiser = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95), eps=1e-8)
+optimiser = model.configure_optimisers(weight_decay = 0.1, learning_rate = 6e-4, device = device)
+max_lr = 6e-4
+min_lr = max_lr * 0.1
+max_steps = 50
+warmup_steps = max_steps / 5
 
-optimiser = torch.optim.AdamW(model.parameters(), lr=3e-4)
-for i in range(50):
+def get_lr(it): # Learning Rate scheduler
+    if it < warmup_steps: # Warmup region
+        return max_lr * (it+1) / warmup_steps 
+    if it > max_steps:
+        return min_lr
+    # Cosine decay
+    decay_ratio = (it - warmup_steps) / (max_steps - warmup_steps)
+    assert 0 <= decay_ratio <= 1
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio)) # starts at 0 and goes to 0
+    return min_lr + coeff * (max_lr - min_lr)
+
+for step in range(max_steps):
     torch.cuda.synchronize()
     t0 = time.time()
-
-    x,y = train_loader.next_batch()
-    x,y = x.to(device), y.to(device)
     optimiser.zero_grad()
-    with torch.autocast(device_type=device, dtype=torch.bfloat16): # NOTE Autocasts to bfloat16 (same exponent as float32, but smaller mantissa) that doesn't require gradient scaler
-        logits, loss = model(x, y)
-    loss.backward()
+    loss_accum = 0.0
+
+    for micro_step in range(grad_accum_steps): # simulating large batches
+        x,y = train_loader.next_batch()
+        x,y = x.to(device), y.to(device)
+        with torch.autocast(device_type=device, dtype=torch.bfloat16): # NOTE Autocasts to bfloat16 (same exponent as float32, but smaller mantissa) that doesn't require gradient scaler
+            logits, loss = model(x, y)
+        loss = loss / grad_accum_steps # reintroduces mean into Sq error
+        loss_accum += loss.detach()
+        loss.backward()
+
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0) # gradient clipping (prevents sudded gradient bursts)
+
+    lr = get_lr(step)
+    for param_group in optimiser.param_groups:
+        param_group["lr"] = lr
     optimiser.step()
+
     torch.cuda.synchronize()
     t1 = time.time()
     dt = (t1-t0)*1000
-    print(f"step {i}, loss: {loss.item()}, dt: {dt:.2f}ms")
 
+    tokens_processed = train_loader.B * train_loader.T * grad_accum_steps
+    tokens_per_sec = tokens_processed / dt
+
+    print(f"step {step} | loss: {loss_accum.item()} | lr: {lr:.6f} | norm: {norm:.4f} | dt: {dt:.2f}ms")
 
 
 import sys; sys.exit(0)
