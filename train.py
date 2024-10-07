@@ -16,6 +16,8 @@ class CausalSelfAttention(nn.Module):
         assert config.n_embd % config.n_head == 0
         self.c_attn  = nn.Linear(config.n_embd, 3*config.n_embd) # key query value projections for all heads, but in a batch
         self.c_proj = nn.Linear(config.n_embd, config.n_embd) # output projection
+        self.c_proj.GPT_SCALE_INIT = 1 # NOTE to prevent increased variance related to accumulation of residual connections
+        # regularization
         self.n_head = config.n_head
         self.n_embd = config.n_embd
         self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size)).view(1, 1, config.block_size, config.block_size))
@@ -52,6 +54,7 @@ class MLP(nn.Module):
         self.c_fc = nn.Linear(config.n_embd, 4 * config.n_embd)
         self.gelu    = nn.GELU(approximate='tanh')
         self.c_proj = nn.Linear(4 * config.n_embd, config.n_embd)
+        self.c_proj.GPT_SCALE_INIT = 1 # NOTE to prevent increased variance related to accumulation of residual connections
 
     def forward(self, x):
         x = self.c_fc(x)
@@ -87,7 +90,22 @@ class GPT(nn.Module):
             ln_f = nn.LayerNorm(config.n_embd),
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-    
+
+        # weight sharing scheme IMPORTANT!
+        self.transformer.wte.weight = self.lm_head.weight # NOTE prevent the bug where this layer is doubled (top and bottom layers are the same)
+        self.apply(self._init_weights) # init params
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            std = 0.02
+            if hasattr(module, "GPT_SCALE_INIT"):
+                std *= (2 * self.config.n_layer) ** -0.5 # NOTE 2 blocks (attention, MLP), normalises addup from residual connections
+            torch.nn.init.normal_(module.weight, mean=0.0, std=std) # NOTE Following Xavier Initialisation: 1/sqrt(num_features)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias) # override default bias init
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+
     def forward(self, idx, targets=None):
         B, T = idx.size()
         assert T <= self.config.block_size, f"Cannot forward sequence of length {T}, block size is only {self.config.block_size}"
@@ -161,6 +179,7 @@ class GPT(nn.Module):
     
 
 # =========== Generation ===========
+import time
 if torch.cuda.is_available():
     device = "cuda"
 elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -207,18 +226,25 @@ class DataLoader:
 # x = buf[:-1].view(B,T)
 # y = buf[1:].view(B,T)
 
+train_loader = DataLoader(B=16,T=1024) # batch size and sequence length
 model = GPT(GPTConfig())
 model.to(device)
-train_loader = DataLoader(B=4,T=32)
 optimiser = torch.optim.AdamW(model.parameters(), lr=3e-4)
 for i in range(50):
+    t0 = time.time()
+
     x,y = train_loader.next_batch()
     x,y = x.to(device), y.to(device)
     optimiser.zero_grad()
     logits, loss = model(x, y)
     loss.backward()
     optimiser.step()
-    print(f"step {i}, loss: {loss.item()}")
+
+    t1 = time.time()
+    if device == "cuda":
+        torch.cuda.synchronize()
+    dt = (t1-t0)*1000
+    print(f"step {i}, loss: {loss.item()}, dt: {dt:.2f}ms")
 
 import sys; sys.exit(0)
 
