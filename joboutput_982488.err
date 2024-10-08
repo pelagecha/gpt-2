@@ -1,0 +1,260 @@
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/dcs/23/u5515985/ai/gpt-2/train.py", line 281, in <module>
+[rank0]:     logits, loss = model(x, y)
+[rank0]:                    ^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/parallel/distributed.py", line 1636, in forward
+[rank0]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank0]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/parallel/distributed.py", line 1454, in _run_ddp_forward
+[rank0]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/eval_frame.py", line 433, in _fn
+[rank0]:     return fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 1110, in __call__
+[rank0]:     return hijacked_callback(
+[rank0]:            ^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 948, in __call__
+[rank0]:     result = self._inner_convert(
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 472, in __call__
+[rank0]:     return _compile(
+[rank0]:            ^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_utils_internal.py", line 84, in wrapper_function
+[rank0]:     return StrobelightCompileTimeProfiler.profile_compile_time(
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_strobelight/compile_time_profiler.py", line 129, in profile_compile_time
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 817, in _compile
+[rank0]:     guarded_code = compile_inner(code, one_graph, hooks, transform)
+[rank0]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 636, in compile_inner
+[rank0]:     out_code = transform_code_object(code, transform)
+[rank0]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/bytecode_transformation.py", line 1185, in transform_code_object
+[rank0]:     transformations(instructions, code_options)
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 178, in _fn
+[rank0]:     return fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/convert_frame.py", line 582, in transform
+[rank0]:     tracer.run()
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/symbolic_convert.py", line 2451, in run
+[rank0]:     super().run()
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/symbolic_convert.py", line 893, in run
+[rank0]:     while self.step():
+[rank0]:           ^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/symbolic_convert.py", line 805, in step
+[rank0]:     self.dispatch_table[inst.opcode](self, inst)
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/symbolic_convert.py", line 2642, in RETURN_VALUE
+[rank0]:     self._return(inst)
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/symbolic_convert.py", line 2627, in _return
+[rank0]:     self.output.compile_subgraph(
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/output_graph.py", line 1123, in compile_subgraph
+[rank0]:     self.compile_and_call_fx_graph(tx, pass2.graph_output_vars(), root)
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/output_graph.py", line 1318, in compile_and_call_fx_graph
+[rank0]:     compiled_fn = self.call_user_compiler(gm)
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/output_graph.py", line 1409, in call_user_compiler
+[rank0]:     raise BackendCompilerFailed(self.compiler_fn, e).with_traceback(
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/output_graph.py", line 1390, in call_user_compiler
+[rank0]:     compiled_fn = compiler_fn(gm, self.example_inputs())
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/backends/distributed.py", line 626, in compile_fn
+[rank0]:     submod_compiler.run(*example_inputs)
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/fx/interpreter.py", line 146, in run
+[rank0]:     self.env[node] = self.run_node(node)
+[rank0]:                      ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/backends/distributed.py", line 348, in run_node
+[rank0]:     compiled_submod_real = self.compile_submod(real_mod, new_args, kwargs)
+[rank0]:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/backends/distributed.py", line 263, in compile_submod
+[rank0]:     self.compiler(input_mod, args),
+[rank0]:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/repro/after_dynamo.py", line 129, in __call__
+[rank0]:     compiled_gm = compiler_fn(gm, example_inputs)
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/__init__.py", line 1951, in __call__
+[rank0]:     return compile_fx(model_, inputs_, config_patches=self.config)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/compile_fx.py", line 1505, in compile_fx
+[rank0]:     return aot_autograd(
+[rank0]:            ^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/backends/common.py", line 69, in __call__
+[rank0]:     cg = aot_module_simplified(gm, example_inputs, **self.kwargs)
+[rank0]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_functorch/aot_autograd.py", line 954, in aot_module_simplified
+[rank0]:     compiled_fn, _ = create_aot_dispatcher_function(
+[rank0]:                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_functorch/aot_autograd.py", line 687, in create_aot_dispatcher_function
+[rank0]:     compiled_fn, fw_metadata = compiler_fn(
+[rank0]:                                ^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_functorch/_aot_autograd/jit_compile_runtime_wrappers.py", line 461, in aot_dispatch_autograd
+[rank0]:     compiled_fw_func = aot_config.fw_compiler(fw_module, adjusted_flat_args)
+[rank0]:                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/compile_fx.py", line 1410, in fw_compiler_base
+[rank0]:     return inner_compile(
+[rank0]:            ^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/repro/after_aot.py", line 84, in debug_wrapper
+[rank0]:     inner_compiled_fn = compiler_fn(gm, example_inputs)
+[rank0]:                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/debug.py", line 304, in inner
+[rank0]:     return fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/compile_fx.py", line 527, in compile_fx_inner
+[rank0]:     compiled_graph = fx_codegen_and_compile(
+[rank0]:                      ^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/lib64/python3.11/contextlib.py", line 81, in inner
+[rank0]:     return func(*args, **kwds)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/compile_fx.py", line 831, in fx_codegen_and_compile
+[rank0]:     compiled_fn = graph.compile_to_fn()
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/graph.py", line 1749, in compile_to_fn
+[rank0]:     return self.compile_to_module().call
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/graph.py", line 1678, in compile_to_module
+[rank0]:     self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+[rank0]:                                                              ^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/graph.py", line 1638, in codegen
+[rank0]:     self.scheduler.codegen()
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_dynamo/utils.py", line 231, in time_wrapper
+[rank0]:     r = func(*args, **kwargs)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/scheduler.py", line 2741, in codegen
+[rank0]:     self.get_backend(device).codegen_node(node)
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/codegen/cuda_combined_scheduling.py", line 69, in codegen_node
+[rank0]:     return self._triton_scheduling.codegen_node(node)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/codegen/simd.py", line 1148, in codegen_node
+[rank0]:     return self.codegen_node_schedule(node_schedule, buf_accesses, numel, rnumel)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/codegen/simd.py", line 1317, in codegen_node_schedule
+[rank0]:     src_code = kernel.codegen_kernel()
+[rank0]:                ^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/codegen/triton.py", line 2159, in codegen_kernel
+[rank0]:     **self.inductor_meta_common(),
+[rank0]:       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/_inductor/codegen/triton.py", line 2047, in inductor_meta_common
+[rank0]:     "backend_hash": torch.utils._triton.triton_hash_with_backend(),
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/utils/_triton.py", line 63, in triton_hash_with_backend
+[rank0]:     backend = triton_backend()
+[rank0]:               ^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/utils/_triton.py", line 49, in triton_backend
+[rank0]:     target = driver.active.get_current_target()
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/runtime/driver.py", line 23, in __getattr__
+[rank0]:     self._initialize_obj()
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/runtime/driver.py", line 20, in _initialize_obj
+[rank0]:     self._obj = self._init_fn()
+[rank0]:                 ^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/runtime/driver.py", line 9, in _create_driver
+[rank0]:     return actives[0]()
+[rank0]:            ^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/backends/nvidia/driver.py", line 371, in __init__
+[rank0]:     self.utils = CudaUtils()  # TODO: make static
+[rank0]:                  ^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/backends/nvidia/driver.py", line 80, in __init__
+[rank0]:     mod = compile_module_from_src(Path(os.path.join(dirname, "driver.c")).read_text(), "cuda_utils")
+[rank0]:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/triton/backends/nvidia/driver.py", line 62, in compile_module_from_src
+[rank0]:     mod = importlib.util.module_from_spec(spec)
+[rank0]:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<frozen importlib._bootstrap>", line 573, in module_from_spec
+[rank0]:   File "<frozen importlib._bootstrap_external>", line 1234, in create_module
+[rank0]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+[rank0]: torch._dynamo.exc.BackendCompilerFailed: backend='compile_fn' raised:
+[rank0]: ImportError: /lib64/libc.so.6: version `GLIBC_2.34' not found (required by /dcs/23/u5515985/.triton/cache/41ce1f58e0a8aa9865e66b90d58b3307bb64c5a006830e49543444faf56202fc/cuda_utils.so)
+
+[rank0]: Set TORCH_LOGS="+dynamo" and TORCHDYNAMO_VERBOSE=1 for more information
+
+
+[rank0]: You can suppress this exception and fall back to eager by setting:
+[rank0]:     import torch._dynamo
+[rank0]:     torch._dynamo.config.suppress_errors = True
+
+E1008 12:14:25.572000 139698066569024 torch/distributed/elastic/multiprocessing/api.py:833] failed (exitcode: 1) local_rank: 0 (pid: 63966) of binary: /usr/bin/python3.11
+Traceback (most recent call last):
+  File "/dcs/23/u5515985/.local/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 348, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 133, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/dcs/23/u5515985/.local/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-10-08_12:14:25
+  host      : falcon-01.dcs.warwick.ac.uk
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 63966)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
