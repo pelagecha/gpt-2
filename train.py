@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import math
 import transformers
 import tiktoken
+import numpy as np
 import inspect 
 import time
 from torch.distributed import init_process_group, destroy_process_group # Distributed Data Parallel (DDP)
@@ -159,23 +160,43 @@ class GPT(nn.Module):
 
 # =========== Generation ===========
 
+def load_tokens(filename):
+    npt = np.load(filename)
+    ptt = torch.tensor(npt, dtype=torch.long)
+    return ptt
+
 
 class MyDataLoader:
-    def __init__(self, B, T, process_rank, num_processes):
+    def __init__(self, B, T, process_rank, num_processes, split):
         self.B = B
         self.T = T
         self.process_rank = process_rank
         self.num_processes = num_processes
+        assert split in {"train", "val"}
 
-        with open("input.txt", "r") as f:
-            text = f.read()
-        enc = tiktoken.get_encoding("gpt2")
-        tokens = enc.encode(text)
-        self.tokens = torch.tensor(tokens)
-        print(f"Loaded {len(self.tokens)} tokens")
-        print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
+        data_root = "/dcs/large/u5515985/hf_cache"
+        shards = os.listdir(data_root)
+        shards = [s for s in shards if split in s]
+        shards = sorted(shards)
+        shards = [os.path.join(data_root, s) for s in shards]
+        self.shards = shards
+        assert len(shards) > 0, f"No shards found for split {split}"
+        if master_process:
+            print(f"found {len(shards)} shards for split {split}")
+
+        self.current_shard = 0
+        self.tokens = load_tokens(self.shards[self.current_shard])
 
         self.current_position = self.B * self.T * self.process_rank # stride out for multiple gpus
+
+        # with open("input.txt", "r") as f:
+        #     text = f.read()
+        # enc = tiktoken.get_encoding("gpt2")
+        # tokens = enc.encode(text)
+        # self.tokens = torch.tensor(tokens)
+        # print(f"Loaded {len(self.tokens)} tokens")
+        # print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
+
     
     def next_batch(self):
         B, T = self.B, self.T
@@ -184,6 +205,8 @@ class MyDataLoader:
         y = (buf[1:]).view(B,T)
         self.current_position += B * T * self.num_processes
         if self.current_position + (B*T*self.num_processes+1) > len(self.tokens):
+            self.current_shard = (self.current_shard + 1) % len(self.shards)
+            self.tokens = load_tokens(self.shards[self.current_shard])
             self.current_position = self.B * self.T * self.process_rank
         return x,y
 
@@ -237,7 +260,7 @@ if master_process: # only print once (at launch)
 
 
 
-train_loader = MyDataLoader(B=4,T=1024, process_rank=ddp_rank, num_processes=ddp_world_size) # batch size and sequence length
+train_loader = MyDataLoader(B=4,T=1024, process_rank=ddp_rank, num_processes=ddp_world_size, split="train") # batch size and sequence length
 torch.set_float32_matmul_precision("high") # NOTE Improves the operation performance through decreased precision
 
 
@@ -245,7 +268,7 @@ torch.set_float32_matmul_precision("high") # NOTE Improves the operation perform
 model = GPT(GPTConfig(vocab_size=50304)) # NOTE Introduce a "nice" number (padded fom 50257) to improve speed of computation (divisible by 2), so the CUDA Block Tiles run better
 model.to(device)
 print("Compiling the model...")
-model = torch.compile(model) # NOTE Compiling the model takes longer to start, but drastically improves the training time
+# model = torch.compile(model) # NOTE Compiling the model takes longer to start, but drastically improves the training time
 if ddp:
     model = DDP(model, device_ids=[ddp_local_rank])
 raw_model = model.module if ddp else model
@@ -255,8 +278,8 @@ raw_model = model.module if ddp else model
 optimiser = raw_model.configure_optimisers(weight_decay = 0.1, learning_rate = 6e-4, device = device)
 max_lr = 6e-4
 min_lr = max_lr * 0.1
-max_steps = 50
-warmup_steps = max_steps / 5
+max_steps = 5 # 19073
+warmup_steps = 1 # 715
 
 def get_lr(it): # Learning Rate scheduler
     if it < warmup_steps: # Warmup region

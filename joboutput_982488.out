@@ -1,8 +1,0 @@
-Using a single cuda instance
-total desired batch size: 524288
-=> calculated gradient accumulation steps: 32
-Loaded 338024 tokens
-1 epoch = 82 batches
-Compiling the model...
-num decayed parameter tensors: 50, with 124,354,560 parameters
-num non-decayed parameter tensors: 98, with 121,344 parameters
